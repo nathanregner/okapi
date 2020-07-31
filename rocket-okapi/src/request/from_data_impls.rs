@@ -1,6 +1,7 @@
 use super::OpenApiFromData;
 use crate::gen::OpenApiGenerator;
 use okapi::{openapi3::*, Map};
+use rocket::data::FromData;
 use rocket_contrib::json::Json; // TODO json feature flag
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -29,7 +30,7 @@ impl<'a, T: JsonSchema + Deserialize<'a>> OpenApiFromData<'a> for Json<T> {
     }
 }
 
-impl<'a, T: OpenApiFromData<'a> + 'a> OpenApiFromData<'a> for StdResult<T, T::Error> {
+impl<'a, T: OpenApiFromData<'a> + FromData + 'a> OpenApiFromData<'a> for StdResult<T, T::Error> {
     fn request_body(gen: &mut OpenApiGenerator) -> Result {
         T::request_body(gen)
     }
