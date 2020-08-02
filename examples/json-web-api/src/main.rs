@@ -5,6 +5,7 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_okapi;
 
+use okapi::openapi3::{OpenApi, SecurityScheme, SecuritySchemeData};
 use rocket::request::{Form, FromForm};
 use rocket_contrib::json::Json;
 use rocket_okapi::swagger_ui::*;

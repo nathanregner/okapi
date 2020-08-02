@@ -1,17 +1,48 @@
 use crate::get_add_operation_fn_name;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use syn::{parse::Parser, punctuated::Punctuated, token::Comma, Path, Result};
+use syn::parse::{Parse, ParseBuffer};
+use syn::{punctuated::Punctuated, token::Comma, Path, Result};
+
+struct Routes {
+    modify_spec: Option<Path>,
+    routes: Punctuated<Path, Comma>,
+}
+
+mod kw {
+    syn::custom_keyword!(spec);
+}
+
+impl Parse for Routes {
+    fn parse(input: &ParseBuffer<'_>) -> Result<Self> {
+        let modify_spec = if input.peek(kw::spec) {
+            input.parse::<kw::spec>()?;
+            input.parse::<Token![:]>()?;
+            let path = input.parse()?;
+            input.parse::<Token![;]>()?;
+            Some(path)
+        } else {
+            None
+        };
+        let routes = input.parse_terminated(Path::parse)?;
+        Ok(Self {
+            modify_spec,
+            routes,
+        })
+    }
+}
 
 pub fn parse(routes: TokenStream) -> TokenStream {
+    let routes = parse_macro_input!(routes as Routes);
     parse_inner(routes)
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
 }
 
-fn parse_inner(routes: TokenStream) -> Result<TokenStream2> {
-    let paths = <Punctuated<Path, Comma>>::parse_terminated.parse(routes)?;
+fn parse_inner(routes: Routes) -> Result<TokenStream2> {
+    let paths = routes.routes;
     let add_operations = create_add_operations(paths.clone())?;
+    let modify_spec = routes.modify_spec;
     Ok(quote! {
         {
             let settings = ::rocket_okapi::settings::OpenApiSettings::new();
@@ -41,6 +72,7 @@ fn parse_inner(routes: TokenStream) -> Result<TokenStream2> {
                 });
             }
             spec.info = info;
+            #modify_spec(&mut spec);
 
             let mut routes = ::rocket::routes![#paths];
             routes.push(::rocket_okapi::handlers::OpenApiHandler::new(spec).into_route(&settings.json_path));

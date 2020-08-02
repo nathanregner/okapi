@@ -1,4 +1,3 @@
-#![feature(specialization)]
 #![forbid(missing_docs)]
 
 //! This projects serves to enable automatic rendering of `openapi.json` files, and provides
