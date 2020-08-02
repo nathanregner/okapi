@@ -350,10 +350,7 @@ pub struct Header {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "derive_json_schema", derive(JsonSchema))]
-#[serde(rename_all = "camelCase")]
 pub struct SecurityScheme {
-    #[serde(rename = "type")]
-    pub schema_type: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(flatten)]
@@ -377,10 +374,9 @@ pub enum SecuritySchemeData {
         bearer_format: Option<String>,
     },
     #[serde(rename = "oauth2")]
-    OAuth2 {
-        flows: OAuthFlows,
-    },
+    OAuth2 { flows: OAuthFlows },
     OpenIdConnect {
+        #[serde(rename = "openIdConnectUrl")]
         open_id_connect_url: String,
     },
 }
